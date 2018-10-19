@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    name: jaeger-deployment
+    labels:
+      app: jaeger
+      jaeger-infra: jaeger-deployment
+  spec:
+    replicas: 1
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: jaeger
+          jaeger-infra: jaeger-pod
+        annotations: {}
+      spec:
+          containers:
+          -   image: jaegertracing/all-in-one
+              name: jaeger
+              ports:
+                - containerPort: 5775
+                  protocol: UDP
+                - containerPort: 6831
+                  protocol: UDP
+                - containerPort: 6832
+                  protocol: UDP
+                - containerPort: 5778
+                  protocol: TCP
+                - containerPort: 16686
+                  protocol: TCP
+                - containerPort: 14268
+                  protocol: TCP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: jaeger-tcp-service
+    labels:
+      app: jaeger
+      jaeger-infra: jaeger-tcp-service
+  spec:
+    ports:
+      - name: http-80
+        port: 80
+        protocol: TCP
+        targetPort: 16686
+      - name: http-5778
+        port: 5778
+        protocol: TCP
+        targetPort: 5778
+      - name: http-14268
+        port: 14268
+        protocol: TCP
+        targetPort: 14268                                        
+    selector:
+      jaeger-infra: jaeger-pod
+    type: LoadBalancer
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: jaeger-udp-service
+    labels:
+      app: jaeger
+      jaeger-infra: jaeger-udp-service
+  spec:
+    ports:
+      - name: http-5775
+        port: 5775
+        protocol: UDP
+        targetPort: 5775
+      - name: http-6831
+        port: 6831
+        protocol: UDP
+        targetPort: 6831
+      - name: http-6832
+        port: 6832
+        protocol: UDP
+        targetPort: 6832                                    
+    selector:
+      jaeger-infra: jaeger-pod
